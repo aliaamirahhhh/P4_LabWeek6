@@ -23,13 +23,25 @@ def main():
     ap.add_argument("ip")
     ap.add_argument("message")
     ap.add_argument("--tunnel", type=int, metavar="N", help="tunnel exit to deliver to")
+
+    ap.add_argument("--hops", type=int, default=8, help="starting tunnel hop limit (0-255)")
+
     args = ap.parse_args()
+
+    if not 0 <= args.hops <= 255:
+        ap.error("--hops must be between 0 and 255")
+
+    if args.tunnel is None and args.hops != 8:
+        ap.error("--hops can only be used together with --tunnel")
 
     iface = next(i for i in get_if_list() if i.endswith("-eth0"))
     pkt = Ether(src=get_if_hwaddr(iface), dst="ff:ff:ff:ff:ff:ff")
+
     if args.tunnel is not None:
-        pkt = pkt / MyTunnel(dst_id=args.tunnel, hop_limit=8)
+        pkt = pkt / MyTunnel(dst_id=args.tunnel, hop_limit=args.hops)
+
     pkt = pkt / IP(dst=args.ip) / UDP(sport=4321, dport=4321) / args.message
+    
     pkt.show2()
     sendp(pkt, iface=iface, verbose=False)
     print(f"Sent from {iface}.")
