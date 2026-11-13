@@ -6,12 +6,12 @@
 """
 import argparse
 
-from scapy.all import IP, UDP, Ether, Packet, ShortField, bind_layers, get_if_hwaddr, get_if_list, sendp
+from scapy.all import IP, UDP, Ether, Packet, ShortField, ByteField, bind_layers, get_if_hwaddr, get_if_list, sendp
 
 
 class MyTunnel(Packet):
     name = "MyTunnel"
-    fields_desc = [ShortField("proto_id", 0x0800), ShortField("dst_id", 0)]
+    fields_desc = [ShortField("proto_id", 0x0800), ShortField("dst_id", 0), ByteField("hop_limit", 8)]
 
 
 bind_layers(Ether, MyTunnel, type=0x1212)
@@ -28,7 +28,7 @@ def main():
     iface = next(i for i in get_if_list() if i.endswith("-eth0"))
     pkt = Ether(src=get_if_hwaddr(iface), dst="ff:ff:ff:ff:ff:ff")
     if args.tunnel is not None:
-        pkt = pkt / MyTunnel(dst_id=args.tunnel)
+        pkt = pkt / MyTunnel(dst_id=args.tunnel, hop_limit=8)
     pkt = pkt / IP(dst=args.ip) / UDP(sport=4321, dport=4321) / args.message
     pkt.show2()
     sendp(pkt, iface=iface, verbose=False)
