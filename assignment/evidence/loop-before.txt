@@ -1,4 +1,0 @@
-logs/s1.txt:0
-logs/s2.txt:0
-logs/s1.txt:105
-logs/s2.txt:103
