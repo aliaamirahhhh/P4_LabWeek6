@@ -1,5 +1,0 @@
-logs/s1.txt:5
-logs/s2.txt:4
-== after 5 secs
-logs/s1.txt:5
-logs/s2.txt:4
