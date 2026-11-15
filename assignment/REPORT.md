@@ -12,10 +12,6 @@ Write each section in your own words, about your own runs. Quote the evidence fi
 
 - The ipv4_forward decrements the IPv4 TTL based on `hdr.ipv4.ttl = hdr.ipv4.ttl - 1;`. However, when the ipv4_forward action is called, the TTL decreases by one but the action does not explicitly check whether the TTL has reached zero or drop the packet when it does.
 
-<!-- How did you create the tunnel loop (which entry, on which switch, which commands)?
-     What did the switch logs show over time, with numbers from loop-before.txt?
-     Then look at the IPv4 path in tunnel.p4: it decrements the TTL. Does that stop an IPv4
-     loop in this program? Check the code, and explain what happens when TTL reaches 0. -->
 
 ## 2. Design: the hop limit
 - The field size was set to 8 bits to repressent values from 0 to 255 which adds approximately only one byte of overhead, and it is placed after dst_id and at the end of the header to make it easier for the header to extend without changing the meaning of the existing fields and how its read, as such;
@@ -43,11 +39,6 @@ action myTunnel_forward(egressSpec_t port) {
 
 -  Other than the header and ingress in tunnel.p4, the send.py and receive.py was also modified to recognise the new field added.
 
-<!-- Your header change and your pipeline change, and the reason for each choice:
-     - the field's size, and where in the header you put it (and why there);
-     - the starting value send.py uses, and how you chose it;
-     - where it's decremented, and what happens when it runs out;
-     - what else had to change for every part of the path to agree (parser, deparser, hosts). -->
 
 ## 3. Implementation
 **tunnel.p4**
@@ -91,12 +82,6 @@ else:
      how = "plain IPv4"
 ```
 
-
-
-
-
-<!-- Summarise what you changed in tunnel.p4, send.py and receive.py. The pull request shows
-     the code itself: here, explain anything a reviewer might not see from the diff alone. -->
 
 ## 4. Evidence: it works
 - When `h1 python3 send.py 10.NN.0.2 "test h2" --tunnel 2 --hops 8` is run
@@ -144,12 +129,6 @@ logs/s1.txt:5
 logs/s2.txt:4
 ```
 
-
-<!-- Show, with your evidence files:
-     - tunnelled delivery to h2 and h3, and the hop limit the receivers saw (delivery.txt);
-     - plain IPv4 still works (delivery.txt);
-     - the same loop as in section 1 now ends, and after how many passes — does that match
-       your design? (loop-after.txt) -->
 
 ## 5. Evaluation
 **a) Prediction vs. Actual Results**
@@ -224,26 +203,13 @@ However, this requires updated switches to support both formats during the trans
 - Header overhead where one byte is added to every tunnel packet, 
 - Processing overhead where the switch needs to read the hop limit, compare to zero, and decrement everytime when forwarding. 
 - Hardware resources where the parser must extract an additional field, while the ingress pipeline conducts the comparison, decrement, and drop operations.
-<!-- a) The mixed rollout (mixed.txt): what did you predict before running s1 with your new
-        program and s2 with tunnel_v1.p4? What actually happened to delivery, and to the loop?
-        Explain every difference from your prediction, byte by byte if you need to.
-     b) Propose a safe way to roll out a header change across a network of switches that can't
-        all be upgraded at once. Compare at least two options (for example a version field, a
-        new EtherType, or ordering fields so old switches still parse them).
-     c) Loop protection in the data plane (this hop limit) versus the control plane (Week 3's
-        check_paths()): what can each catch that the other can't? Why do real networks use both?
-     d) What would this change cost on a hardware switch running at line rate? -->
+
 
 ## AI use
 ChatGPT was used for the following:
 - Explained how to read the header, parser, ingress, egress, deparser, and what each stage does; difference between using the tunnel or ipv4 forward actions; and how to read the logs
 - Modifying tunnel.p4, send.py and adding --hops, receive.py
 - Understanding the mixed rollout and its expected output based on s1 and s2 logs, and answering questions based on the mixed rollout
-
-<!-- This assignment is Level 3 (Open): AI use is allowed if you declare it. State which tools you
-     used (or "None") and what each did — for example "ChatGPT explained the bmv2 log format;
-     the first draft of the hop-limit check came from Copilot, which I then changed and tested".
-     Be ready to explain any part of your work yourself. -->
 
 ## Evidence files
 
